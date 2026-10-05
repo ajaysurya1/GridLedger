@@ -21,7 +21,7 @@ class Config:
 
     # ── CUSUM parameters ──────────────────────────────────────────────────
     cusum_k: float = 0.5        # slack / reference value
-    cusum_h: float = 9.0        # alarm threshold (tuned on seeds 1-5, FAR≤0.4/100 node-days)
+    cusum_h: float = 6.5        # alarm threshold (tuned on seeds 1-5, FAR≤0.4/100 node-days)
     min_run_days: int = 3
     min_excess_kwh: float = 15.0
 
@@ -44,12 +44,29 @@ class Config:
         "FIELD": 1500,          # ASSUMPTION
         "PATROL": 800,          # ASSUMPTION
         "DESK": 300,            # ASSUMPTION
+        "FIELD+PATROL": 2300,   # ASSUMPTION
     })
 
     # ── ASSUMPTION: financial / environmental projection horizon ──────────
     horizon_months: float = 3.0         # ASSUMPTION
     co2_t_per_mwh: float = 0.710        # ASSUMPTION — India grid emission factor tCO2/MWh
     post_fix_keep: float = 0.8          # ASSUMPTION — fraction of legitimate load retained after fix
+
+    # ── ASSUMPTION: Phase 2 Intelligence & Reconcile ──────────────────────
+    candidate_ratio_threshold: float = 0.9      # ASSUMPTION: candidate deficit ratio threshold
+    min_reconcile_gain: float = 0.02            # ASSUMPTION: backward elimination min gain
+    coverage_attributable: float = 0.7          # ASSUMPTION: customer-attributable threshold
+    coverage_mixed: float = 0.3                 # ASSUMPTION: mixed threshold
+    vacancy_mean_kwh: float = 0.08              # ASSUMPTION: vacancy mean kWh/h threshold
+    vacancy_min_days: int = 5                   # ASSUMPTION: vacancy sustained days
+    solar_shortfall_share: float = 0.75         # ASSUMPTION: solar daytime shortfall fraction
+    solar_eve_ratio_lo: float = 0.9             # ASSUMPTION: solar evening ratio lower bound
+    solar_eve_ratio_hi: float = 1.1             # ASSUMPTION: solar evening ratio upper bound
+    data_gap_imputed_share: float = 0.30        # ASSUMPTION: data gap threshold
+    tx_overload_util: float = 0.90              # ASSUMPTION: transformer rated utilisation
+    records_error_ratio_tol: float = 0.30       # ASSUMPTION: swap excess matching tolerance
+    flatline_std_thresh: float = 1e-6           # ASSUMPTION: flatline standard deviation threshold
+    flatline_readings: int = 12                 # ASSUMPTION: consecutive identical readings
 
     # ── Simulation start ──────────────────────────────────────────────────
     sim_start: str = "2026-08-01"
@@ -120,6 +137,21 @@ class Config:
     # ── Status thresholds ─────────────────────────────────────────────────
     amber_s_fraction: float = 0.5  # fraction of h above which AMBER triggers
     amber_recent_days: int = 3     # days since last run end for AMBER
+
+    # ── ASSUMPTION: Phase 3 Voltage Physics Cross-check ───────────────────
+    lv_sample_prob: float = 0.55                # ASSUMPTION: meter voltage sampling probability per hour
+    lv_meas_noise_v: float = 0.35               # ASSUMPTION: meter voltage measurement noise std (V)
+    lv_v0_noise_v: float = 0.20                 # ASSUMPTION: tx secondary voltage measurement noise std (V)
+    lv_model_lognorm_sd: float = 0.08           # ASSUMPTION: utility digital twin impedance model error
+    volt_z_alarm: float = 3.5                   # ASSUMPTION: voltage z-score alarm threshold
+    volt_alarm_day_frac: float = 0.60           # ASSUMPTION: fraction of days in window exceeding z threshold
+    volt_alarm_window_days: int = 5             # ASSUMPTION: evaluation window length (days)
+    volt_alpha_min_w: float = 300.0             # ASSUMPTION: min extra load in watts for voltage candidate
+    v_nominal: float = 230.0                    # ASSUMPTION: nominal LV phase voltage (V)
+
+    # ── ASSUMPTION: Phase 4 Verification & Impact ─────────────────────────
+    inspection_success_rate: float = 0.95       # ASSUMPTION: true theft detection rate on dispatch
+    patrol_catch_rate_tap: float = 0.85         # ASSUMPTION: illegal tap detection rate via line patrol
 
 
 # Module-level default instance

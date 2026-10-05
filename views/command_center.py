@@ -21,7 +21,8 @@ STATUS_COLOR = {"RED": RED, "AMBER": AMBER, "GREEN": GREEN}
 
 def _status_badge(status: str) -> str:
     cls = {"RED": "badge-red", "AMBER": "badge-amber", "GREEN": "badge-green"}[status]
-    return f'<span class="{cls}">{status}</span>'
+    symbol = {"RED": "▲", "AMBER": "●", "GREEN": "■"}[status]
+    return f'<span class="{cls}">{symbol} {status}</span>'
 
 
 def _kpi_card(value: str, label: str, color_class: str = "kpi-blue", unit: str = "") -> str:
@@ -179,16 +180,44 @@ def render(world, results) -> None:
     cfg = world.cfg
 
     # ── Page header ───────────────────────────────────────────────────────
-    st.markdown("""
-    <div style="margin-bottom:1.5rem;">
-        <h1 style="font-size:1.6rem;font-weight:700;letter-spacing:-0.03em;margin:0;color:#FAFAFA;">
-            Command Center
-        </h1>
-        <p style="color:#71717A;font-size:0.85rem;margin:0.25rem 0 0 0;">
-            Real-time grid energy reconciliation — every boundary, every boundary.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.title("Command Center")
+    st.caption("See where energy stops matching, and what deserves a closer look.")
+
+    if not st.session_state.get("how_to_read_dismissed", False):
+        with st.container(border=True):
+            intro, close = st.columns([8, 1])
+            with intro:
+                st.subheader("How to read this")
+            with close:
+                if st.button("Dismiss", key="dismiss_reading_guide", help="Hide this introduction."):
+                    st.session_state.how_to_read_dismissed = True
+                    st.rerun()
+            steps = st.columns(3)
+            for col, title, text in zip(
+                steps,
+                ("1. Find a location", "2. Check the evidence", "3. Choose a next step"),
+                ("A marked transformer or feeder has an unusual energy gap.",
+                 "Open its case to see the balance, meter patterns, and data quality.",
+                 "Use the suggested review action as a lead, never as a verdict."),
+            ):
+                with col:
+                    st.markdown(f"**{title}**")
+                    st.caption(text)
+
+    st.subheader("From meter readings to a reviewable lead")
+    stages = st.columns(4)
+    for col, title, description in zip(
+        stages,
+        ("Compare", "Locate", "Rule out", "Recommend"),
+        ("Check energy entering a transformer against customer meter readings and expected line loss.",
+         "Follow the gap up or down the network to find the transformer or feeder where it begins.",
+         "Check whether solar, an empty property, missing readings, a stuck meter, or incorrect records could explain it.",
+         "Combine the balance with meter and voltage clues, then show an operator what to verify."),
+    ):
+        with col:
+            st.markdown(f"**{title}**")
+            st.caption(description)
+    st.caption("Built in this prototype: a simulated grid, repeatable event scenarios, CSV data import, three-system benchmark, customer explanations, voltage cross-checks, and review recommendations. No finding is a verdict.")
 
     # ── KPI strip ─────────────────────────────────────────────────────────
     k1, k2, k3, k4 = st.columns(4)
@@ -199,19 +228,16 @@ def render(world, results) -> None:
     dq = int(kpis["dq_alerts"])
 
     with k1:
-        color = "kpi-red" if red_count > 0 else "kpi-green"
-        st.markdown(_kpi_card(str(red_count), "Red Nodes Active", color), unsafe_allow_html=True)
+        st.metric("Locations to review", red_count, help="Active locations with a persistent unexplained energy gap. A flag is not proof of theft.")
     with k2:
-        st.markdown(_kpi_card(f"{unacct:,.0f}", "Unaccounted kWh (active runs)", "kpi-amber", "kWh"), unsafe_allow_html=True)
+        st.metric("Unexplained energy", f"{unacct:,.0f} kWh", help="Estimated gap across active locations after expected technical losses.")
     with k3:
-        st.markdown(
-            _kpi_card(f"₹{inr:,.0f}", "Est. Revenue at Stake / Month", "kpi-red") +
-            '<span class="assumption-badge">ASSUMPTION</span>',
-            unsafe_allow_html=True
-        )
+        st.metric("Estimated monthly value", f"₹{inr:,.0f}", help="Illustrative value using assumed tariff and recovery values; not a bill or confirmed loss.")
     with k4:
-        color = "kpi-amber" if dq > 0 else "kpi-green"
-        st.markdown(_kpi_card(str(dq), "Data-Quality Alerts", color), unsafe_allow_html=True)
+        st.metric("Readings to check", dq, help="Meter intervals quarantined due to data-quality rules.")
+
+    if red_count == 0:
+        st.success(f"All clear at day {results.today_day}. No active locations need review.")
 
     st.markdown("---")
 
@@ -219,8 +245,8 @@ def render(world, results) -> None:
     left, right = st.columns([3, 1.4])
 
     with left:
-        st.markdown('<div class="section-header">Grid Tree</div>', unsafe_allow_html=True)
-        st.caption("Click a node to inspect · Size ∝ mean load · Colour = status")
+        st.markdown('<div class="section-header">Network overview</div>', unsafe_allow_html=True)
+        st.caption("Select a transformer or feeder to inspect. Status uses words and symbols as well as colour.")
 
         fig, node_ids = _build_grid_tree(world, results)
 
@@ -258,7 +284,7 @@ def render(world, results) -> None:
             st.rerun()
 
     with right:
-        st.markdown('<div class="section-header">Node Summary</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">What we know</div>', unsafe_allow_html=True)
 
         sel = st.session_state.get("selected_node")
         if sel and sel in nodes:
@@ -290,7 +316,7 @@ def render(world, results) -> None:
             </div>
             <div class="kpi-card" style="margin-bottom:0.4rem;">
                 <div class="kpi-value" style="font-size:1.4rem;color:#A1A1AA;">{last_S:.2f}</div>
-                <div class="kpi-label">CUSUM S (current)</div>
+                <div class="kpi-label">Persistence score</div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -302,6 +328,30 @@ def render(world, results) -> None:
                     {run.days} days · {run.excess_kwh:.1f} kWh total<br>
                     Night share: {run.night_share:.0%}
                     {'· <strong>Night-heavy (theft signal)</strong>' if run.night_share > 0.45 else ''}
+                </div>
+                """, unsafe_allow_html=True)
+
+            # Voltage alarm indicator
+            volt = results.voltage_by_tx.get(sel, {}) if hasattr(results, 'voltage_by_tx') else {}
+            if volt.get('alarm'):
+                alpha_kw = volt.get('alpha_kw', 0.0)
+                st.markdown(f"""
+                <div class="warn-box">
+                    ⚡ <strong>Voltage alarm</strong> — smart meters show ~{alpha_kw:.1f} kW
+                    of unmetered load (digital twin deviation detected)
+                </div>
+                """, unsafe_allow_html=True)
+
+            fused = results.fusion_by_tx.get(sel, {}) if hasattr(results, 'fusion_by_tx') else {}
+            if fused:
+                score_pct = fused.get('fused_score', 0.0) * 100
+                conf = fused.get('confidence', 'LOW')
+                conf_color = {'HIGH': '#E5484D', 'MEDIUM': '#F5A524', 'LOW': '#30A46C'}.get(conf, '#71717A')
+                st.markdown(f"""
+                <div class="kpi-card" style="margin-top:0.4rem;">
+                    <div class="kpi-label">Fused Confidence</div>
+                    <div class="kpi-value" style="font-size:1.2rem;color:{conf_color};">{score_pct:.0f}%</div>
+                    <div style="font-size:0.7rem;color:#71717A;">{conf} — {fused.get('channel', '')}</div>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -330,12 +380,16 @@ def render(world, results) -> None:
         active_runs = [r for r in nf.runs if r.active]
         exc = sum(abs(r.kwh_per_day) for r in active_runs)
         last_s = float(nf.S[-1]) if len(nf.S) > 0 else 0.0
+        volt = results.voltage_by_tx.get(nid, {}) if hasattr(results, 'voltage_by_tx') else {}
+        fused = results.fusion_by_tx.get(nid, {}) if hasattr(results, 'fusion_by_tx') else {}
         rows.append({
             "Node": nid,
             "Type": nf.kind.title(),
             "Status": nf.status,
             "kWh/day missing": f"{exc:.1f}" if exc > 0 else "—",
-            "CUSUM S": f"{last_s:.2f}",
+            "Persistence score": f"{last_s:.2f}",
+            "Volt Alarm": "⚡ YES" if volt.get("alarm") else "—",
+            "Confidence": f"{fused.get('fused_score', 0.0)*100:.0f}%" if fused else "—",
             "Active runs": len(active_runs),
             "DQ warnings": len(nf.dq_warnings),
         })
@@ -344,9 +398,9 @@ def render(world, results) -> None:
 
     def _color_status(val: str) -> str:
         return {
-            "RED": "color: #E5484D; font-weight: 600",
-            "AMBER": "color: #F5A524; font-weight: 600",
-            "GREEN": "color: #30A46C; font-weight: 600",
+            "▲ Review": "color: #E5484D; font-weight: 600",
+            "● Watch": "color: #F5A524; font-weight: 600",
+            "■ Balanced": "color: #30A46C; font-weight: 600",
         }.get(val, "")
 
     st.dataframe(

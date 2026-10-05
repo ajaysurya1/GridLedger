@@ -386,6 +386,50 @@ def simulate(seed: int, scenarios: Optional[List[Any]] = None, cfg: Config = CFG
 
     mapping_df = pd.DataFrame(mapping_rows).sort_values(["meter_idx", "valid_from_day"]).reset_index(drop=True)
 
+    # ── Phase 3: LV network + voltage measurement simulation ──────────────
+    from gridledger.voltage import build_lv_network, generate_voltage_measurements
+
+    lv_networks: Dict[str, Any] = {}
+    v_meas_by_tx: Dict[str, np.ndarray] = {}
+    v0_by_tx: Dict[str, np.ndarray] = {}
+
+    for ji in range(n_tx):
+        tx_id = f"T{ji + 1:02d}"
+        cust_indices = np.array(tx_customer_lists[ji], dtype=np.int32)
+        if len(cust_indices) == 0:
+            continue
+
+        lv = build_lv_network(ji, seed, cust_indices, cfg)
+
+        # Determine if any ILLEGAL_TAP targets this transformer during simulation
+        tap_pole_node: Optional[int] = None
+        tap_kw_arr: Optional[np.ndarray] = None
+        for sc in scenarios:
+            if sc.kind == "ILLEGAL_TAP" and sc.target == ji:
+                # Place tap at the last pole in the network (worst case)
+                tap_pole_node = int(lv["pole_nodes"][-1])
+                tap_kw_arr = tap_kwh[ji].astype(np.float64)
+                break
+
+        # True customer load for this transformer's customers
+        cust_true = true_kwh[cust_indices, :]  # (n_cust, T)
+
+        v_meas, v0_t = generate_voltage_measurements(
+            lv, cust_true, seed, ji, T, cfg,
+            tap_pole_node=tap_pole_node,
+            tap_kw=tap_kw_arr,
+        )
+
+        lv_networks[tx_id] = lv
+        v_meas_by_tx[tx_id] = v_meas
+        v0_by_tx[tx_id] = v0_t
+
+    extras = {
+        "lv": lv_networks,          # tx_id -> LV network dict (topology + impedances)
+        "v_meas": v_meas_by_tx,     # tx_id -> (n_cust, T) sampled voltages (V), NaN=unsampled
+        "v0": v0_by_tx,             # tx_id -> (T,) transformer secondary voltage (V)
+    }
+
     # ── Assemble Observed & Truth ─────────────────────────────────────────
     observed = Observed(
         t0=t0,
@@ -397,6 +441,7 @@ def simulate(seed: int, scenarios: Optional[List[Any]] = None, cfg: Config = CFG
         tx_in_kwh=tx_in_kwh,
         feeder_in_kwh=feeder_in_kwh,
         mapping=mapping_df,
+        extras=extras,
     )
 
     truth = Truth(

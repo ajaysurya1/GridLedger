@@ -11,7 +11,7 @@ Rules:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -27,6 +27,16 @@ from gridledger.balance import (
     feeder_residual,
 )
 from gridledger.persistence import classify_runs, Run
+from gridledger.suspects import (
+    compute_baselines,
+    analyse_transformer_customers,
+    CustomerDiagnostic,
+)
+from gridledger.reconcile import sparse_reconcile, reconcile
+from gridledger.records_error import detect_records_errors, whatif_reassign
+from gridledger.triage import Case, build_case_for_node
+from gridledger.voltage import analyse_tx_voltage
+from gridledger.fusion import fuse_evidence
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -62,6 +72,16 @@ class Results:
     status_summary: Dict[str, int]      # RED/AMBER/GREEN counts
     kpis: Dict[str, float]
     today_day: int
+    cases: List[Case] = field(default_factory=list)
+    cases_by_node: Dict[str, Case] = field(default_factory=dict)
+    records_errors: List[Any] = field(default_factory=list)
+    diagnostics_by_tx: Dict[str, List[CustomerDiagnostic]] = field(default_factory=dict)
+    reconcile_by_tx: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    voltage_by_tx: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    fusion_by_tx: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    baselines: Optional[np.ndarray] = None
+    shortfalls: Optional[np.ndarray] = None
+    cleaned_meter: Optional[np.ndarray] = None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -106,41 +126,43 @@ def _clean_meter_data(
 
         cleaned[ci] = row
 
-    # Imputation: calibration-window hour/day-type mean (no peeking beyond cal_days)
-    cal_hours = cfg.cal_days * 24
-    cal_T = min(cal_hours, T)
+    # Calibration-only hour-of-day x weekend means, computed across customers
+    # and time in batches. Records-error what-if checks invoke this cleaner
+    # repeatedly, so avoid thousands of small nanmean calls per invocation.
+    cal_T = min(cfg.cal_days * 24, T)
+    hours = np.arange(T) % 24
+    days = np.arange(T) // 24
+    is_weekend = ((days + 5) % 7 >= 5).astype(int)
+    groups = hours + 24 * is_weekend
+    cal_groups = groups[:cal_T]
+    cal_data = cleaned[:, :cal_T]
+    valid = np.isfinite(cal_data)
+    counts = np.zeros((n_c, 48), dtype=np.int32)
+    totals = np.zeros((n_c, 48), dtype=np.float64)
+    for group in range(48):
+        group_mask = cal_groups == group
+        if group_mask.any():
+            values = cal_data[:, group_mask]
+            group_valid = valid[:, group_mask]
+            counts[:, group] = group_valid.sum(axis=1)
+            totals[:, group] = np.where(group_valid, values, 0.0).sum(axis=1)
 
-    for ci in range(n_c):
-        row = cleaned[ci]
-        nan_mask = np.isnan(row)
-        if not nan_mask.any():
+    global_count = valid.sum(axis=1)
+    global_total = np.where(valid, cal_data, 0.0).sum(axis=1)
+    fallback = np.divide(global_total, global_count, out=np.zeros(n_c), where=global_count > 0)
+    means = np.divide(totals, counts, out=np.broadcast_to(fallback[:, None], totals.shape).copy(),
+                      where=counts > 0)
+
+    missing = np.isnan(cleaned)
+    for group in range(48):
+        positions = groups == group
+        if not positions.any():
             continue
-
-        # Build lookup: hour-of-day x is_weekend
-        hours = np.arange(T) % 24
-        days = np.arange(T) // 24
-        # Compute day-of-week using offset (day 0 = 2026-08-01 = Saturday, dow=5)
-        dow = (days + 5) % 7
-        is_wend = (dow >= 5).astype(int)
-
-        # Calibration data only
-        cal_row = row[:cal_T]
-        cal_nan = nan_mask[:cal_T]
-        cal_hours_arr = hours[:cal_T]
-        cal_wend = is_wend[:cal_T]
-
-        for h in range(24):
-            for w in range(2):
-                mask_hw = (cal_hours_arr == h) & (cal_wend == w) & ~cal_nan
-                if mask_hw.any():
-                    mean_val = np.nanmean(cal_row[mask_hw])
-                else:
-                    mean_val = np.nanmean(cal_row[~cal_nan]) if (~cal_nan).any() else 0.0
-
-                # Apply to full window
-                fill_mask = nan_mask & (hours == h) & (is_wend == w)
-                imputed[ci, fill_mask] = mean_val
-                cleaned[ci, fill_mask] = mean_val
+        group_missing = missing[:, positions]
+        if group_missing.any():
+            fill_values = means[:, group, None]
+            cleaned[:, positions] = np.where(group_missing, fill_values, cleaned[:, positions])
+            imputed[:, positions] = np.where(group_missing, fill_values, imputed[:, positions])
 
     quarantine_df = pd.DataFrame(quarantine_rows) if quarantine_rows else pd.DataFrame(
         columns=["meter_idx", "hour", "reason"]
@@ -385,20 +407,139 @@ def run(
             )
         nodes[fid] = finding_f
 
+    # ── Phase 2 Intelligence Layer: Baselines & Attribution ───────────────
+    baselines, shortfalls, _ = compute_baselines(cleaned_meter, temp_now, cfg.cal_days, cfg)
+
+    # Records error detection across all transformer pairs
+    records_errors = detect_records_errors(nodes, obs, cleaned_meter, today_day, cfg)
+
+    cases: List[Case] = []
+    cases_by_node: Dict[str, Case] = {}
+    diagnostics_by_tx: Dict[str, List[CustomerDiagnostic]] = {}
+    reconcile_by_tx: Dict[str, Dict[str, Any]] = {}
+    voltage_by_tx: Dict[str, Dict[str, Any]] = {}
+    fusion_by_tx: Dict[str, Dict[str, Any]] = {}
+
+
+    for _, tx_row in obs.transformers.iterrows():
+        ji = int(tx_row["tx_idx"])
+        tx_id = str(tx_row["tx_id"])
+        finding = nodes[tx_id]
+
+        active_runs = [r for r in finding.runs if r.active and r.direction == "positive"]
+        if active_runs:
+            run = active_runs[0]
+            w_start = run.start * 24
+            w_end = (run.end + 1) * 24
+        else:
+            w_start = cfg.cal_days * 24
+            w_end = T_now
+
+        diagnostics = analyse_transformer_customers(
+            ji, obs, cleaned_meter, imputed_kwh, baselines, shortfalls,
+            w_start, w_end, today_day, cfg
+        )
+        diagnostics_by_tx[tx_id] = diagnostics
+
+        # Prepare candidate shortfall matrix for sparse reconciliation
+        cands = [d for d in diagnostics if d.is_candidate]
+        n_blocks = max(1, (w_end - w_start) // 6)
+        b_lim = n_blocks * 6
+        gap_blocks = np.maximum(0.0, finding.r_hourly[w_start: w_start + b_lim]).reshape(n_blocks, 6).sum(axis=1)
+
+        if cands:
+            A = np.column_stack([d.shortfall_blocks for d in cands])
+        else:
+            A = np.zeros((n_blocks, 0), dtype=np.float64)
+
+        reconcile_out = sparse_reconcile(gap_blocks, A, min_gain=cfg.min_reconcile_gain)
+        reconcile_by_tx[tx_id] = reconcile_out
+
+        rated_kw = float(tx_row["rated_kw"]) if "rated_kw" in tx_row else 100.0
+        case = build_case_for_node(
+            tx_id, finding, records_errors, diagnostics, reconcile_out, today_day, cfg, rated_kw=rated_kw
+        )
+        if case is not None:
+            cases.append(case)
+            cases_by_node[tx_id] = case
+
+        # ── Phase 3: Voltage cross-check ────────────────────────────────
+        lv_nets = obs.extras.get("lv", {})
+        v_meas_all = obs.extras.get("v_meas", {})
+        v0_all = obs.extras.get("v0", {})
+
+        if tx_id in lv_nets and tx_id in v_meas_all and tx_id in v0_all:
+            lv = lv_nets[tx_id]
+            v_meas = v_meas_all[tx_id]
+            v0_t = v0_all[tx_id]
+
+            # Metered consumption for this tx's customers (days < today_day)
+            tx_mapping = mapping_now[mapping_now["tx_idx"] == ji]
+            cust_indices = tx_mapping["meter_idx"].values
+            n_cust_lv = len(lv["cust_nodes"])
+            if len(cust_indices) >= n_cust_lv:
+                cust_indices_lv = cust_indices[:n_cust_lv]
+            else:
+                cust_indices_lv = cust_indices
+
+            metered_kwh_lv = np.zeros((n_cust_lv, T_now), dtype=np.float64)
+            for k, ci in enumerate(cust_indices_lv):
+                if k < n_cust_lv:
+                    metered_kwh_lv[k, :] = np.nan_to_num(cleaned_meter[ci, :], nan=0.0)
+
+            volt_result = analyse_tx_voltage(
+                tx_id, lv,
+                v_meas[:, :T_now],
+                v0_t[:T_now],
+                metered_kwh_lv,
+                today_day=today_day,
+                n_days=n_days,
+                cal_days=cfg.cal_days,
+                cfg=cfg,
+            )
+            voltage_by_tx[tx_id] = volt_result
+
+            # ── Evidence fusion ─────────────────────────────────────────
+            from gridledger.config import CFG as _CFG
+            last_S = float(finding.S[-1]) if len(finding.S) > 0 else 0.0
+            e_balance = float(np.clip(last_S / max(_CFG.cusum_h, 1e-6), 0.0, 1.0))
+
+            # Best reconcile coverage from this transformer's reconcile output
+            rec_out = reconcile_by_tx.get(tx_id, {})
+            e_suspect = float(np.clip(rec_out.get("coverage", 0.0), 0.0, 1.0))
+
+            e_volt = float(volt_result.get("e_volt", 0.0))
+
+            fused = fuse_evidence(e_balance, e_suspect, e_volt)
+            fusion_by_tx[tx_id] = fused
+
+    # Feeder cases
+    for _, f_row in obs.feeders.iterrows():
+        fid = str(f_row["feeder_id"])
+        finding_f = nodes[fid]
+        case_f = build_case_for_node(fid, finding_f, [], [], {}, today_day, cfg)
+        if case_f is not None:
+            cases.append(case_f)
+            cases_by_node[fid] = case_f
+
+    # Group cases by feeder into route order: feeder_idx, then level (feeder first), then node id
+    cases.sort(key=lambda c: (c.feeder_idx, 0 if c.level == "feeder" else 1, c.node))
+
     # ── KPIs ──────────────────────────────────────────────────────────────
     red_nodes = [nid for nid, nf in nodes.items() if nf.status == "RED"]
     unaccounted_kwh = sum(
         abs(r.excess_kwh) for nf in nodes.values() if nf.status == "RED"
         for r in nf.runs if r.active and r.direction == "positive"
     )
-    # Estimated INR/month at stake
-    # ASSUMPTION: use blended tariff from config
+    # Estimated INR/month from cases or fallback
     avg_tariff = cfg.tariff_inr["DOMESTIC"]
     kwh_per_day_at_stake = sum(
         abs(r.kwh_per_day) for nf in nodes.values() if nf.status == "RED"
         for r in nf.runs if r.active
     )
-    inr_per_month = kwh_per_day_at_stake * 30 * avg_tariff  # ASSUMPTION
+    inr_per_month_baseline = kwh_per_day_at_stake * 30 * avg_tariff  # ASSUMPTION
+    real_inr_per_month = sum(max(0.0, c.priority_inr) for c in cases)
+    inr_per_month = real_inr_per_month if cases else inr_per_month_baseline
 
     status_counts = {"RED": 0, "AMBER": 0, "GREEN": 0}
     for nf in nodes.values():
@@ -410,6 +551,7 @@ def run(
         "inr_per_month": float(inr_per_month),
         "dq_alerts": float(len(quarantine_df)),
         "kwh_per_day_at_stake": float(kwh_per_day_at_stake),
+        "cases_count": float(len(cases)),
     }
 
     return Results(
@@ -418,4 +560,14 @@ def run(
         status_summary=status_counts,
         kpis=kpis,
         today_day=today_day,
+        cases=cases,
+        cases_by_node=cases_by_node,
+        records_errors=records_errors,
+        diagnostics_by_tx=diagnostics_by_tx,
+        reconcile_by_tx=reconcile_by_tx,
+        voltage_by_tx=voltage_by_tx,
+        fusion_by_tx=fusion_by_tx,
+        baselines=baselines,
+        shortfalls=shortfalls,
+        cleaned_meter=cleaned_meter,
     )

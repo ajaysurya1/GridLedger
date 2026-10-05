@@ -33,17 +33,8 @@ INNOCENT_COLOR = {True: "#30A46C", False: "#E5484D"}
 
 def render(world, results) -> None:
     """Render the Scenario Lab page."""
-    st.markdown("""
-    <div style="margin-bottom:1.5rem;">
-        <h1 style="font-size:1.6rem;font-weight:700;letter-spacing:-0.03em;margin:0;color:#FAFAFA;">
-            Scenario Lab
-        </h1>
-        <p style="color:#71717A;font-size:0.85rem;margin:0.25rem 0 0 0;">
-            Active injected events for the current preset — operator view only.
-            Detection code never sees this table.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.title("What can happen")
+    st.caption("Examples in the selected simulated world. These details are not available to the detection pipeline.")
 
     obs = world.observed
     scenarios = world.truth.scenarios

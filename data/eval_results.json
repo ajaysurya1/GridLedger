@@ -1,0 +1,926 @@
+{
+  "metadata": {
+    "seeds": [
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110
+    ],
+    "seed_set": "test",
+    "git_sha": "71be3659f57cd65008d02b3f437aecfbc5a75bc4",
+    "date_utc": "2026-10-05T14:00:36.331805+00:00",
+    "runtime_seconds": 36.353784599981736,
+    "today_day": 40,
+    "systems": {
+      "A": "Customer-only",
+      "B": "Fixed 8% weekly gap",
+      "C": "GridLedger"
+    }
+  },
+  "summary": {
+    "A": {
+      "zone_localisation_accuracy": {
+        "mean": 0.6238095238095238,
+        "std": 0.14796852300217672
+      },
+      "event_recall": {
+        "mean": 0.6238095238095238,
+        "std": 0.14796852300217672
+      },
+      "case_precision": {
+        "mean": 0.3881487956487956,
+        "std": 0.09434032991639824
+      },
+      "customer_top3_hit_rate": {
+        "mean": 0.5,
+        "std": 0.16996731711975951
+      },
+      "median_detection_delay_days": {
+        "mean": 2.4,
+        "std": 0.9660917830792959
+      },
+      "false_inspections_per_100_transformer_days": {
+        "mean": 1.9871794871794872,
+        "std": 0.3939976263800379
+      },
+      "innocent_lookalike_false_positive_rate": {
+        "mean": 0.9200000000000002,
+        "std": 0.13984117975602023
+      },
+      "recovered_simulated_kwh_top5": {
+        "mean": 448.60045824050906,
+        "std": 331.4276793368423
+      },
+      "events": {
+        "mean": 6.4,
+        "std": 0.5163977794943222
+      },
+      "cases": {
+        "mean": 10.2,
+        "std": 1.6865480854231356
+      },
+      "per_kind_recall": {
+        "BYPASS": {
+          "mean": 1.0,
+          "std": 0.0
+        },
+        "FEEDER_SEGMENT": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "ILLEGAL_TAP": {
+          "mean": 0.3,
+          "std": 0.4830458915396479
+        },
+        "NIGHT_THEFT": {
+          "mean": 0.6,
+          "std": 0.5163977794943223
+        },
+        "STEP_TAMPER": {
+          "mean": 1.0,
+          "std": 0.0
+        },
+        "STUCK_METER": {
+          "mean": 0.6,
+          "std": 0.5163977794943222
+        },
+        "WRONG_MAPPING": {
+          "mean": 0.5,
+          "std": 0.5270462766947299
+        }
+      }
+    },
+    "B": {
+      "zone_localisation_accuracy": {
+        "mean": 0.6095238095238095,
+        "std": 0.10951230673435136
+      },
+      "event_recall": {
+        "mean": 0.6095238095238095,
+        "std": 0.10951230673435136
+      },
+      "case_precision": {
+        "mean": 0.59,
+        "std": 0.1961355036765887
+      },
+      "customer_top3_hit_rate": {
+        "mean": 0.4,
+        "std": 0.18856180831641267
+      },
+      "median_detection_delay_days": {
+        "mean": 5.1,
+        "std": 2.4585451886114367
+      },
+      "false_inspections_per_100_transformer_days": {
+        "mean": 1.442307692307692,
+        "std": 0.6964959834618214
+      },
+      "innocent_lookalike_false_positive_rate": {
+        "mean": 0.4600000000000001,
+        "std": 0.2503331114069145
+      },
+      "recovered_simulated_kwh_top5": {
+        "mean": 650.0776103019714,
+        "std": 347.8874576764945
+      },
+      "events": {
+        "mean": 6.4,
+        "std": 0.5163977794943222
+      },
+      "cases": {
+        "mean": 10.5,
+        "std": 1.9578900207451218
+      },
+      "per_kind_recall": {
+        "BYPASS": {
+          "mean": 0.9,
+          "std": 0.31622776601683794
+        },
+        "FEEDER_SEGMENT": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "ILLEGAL_TAP": {
+          "mean": 1.0,
+          "std": 0.0
+        },
+        "NIGHT_THEFT": {
+          "mean": 0.2,
+          "std": 0.42163702135578396
+        },
+        "STEP_TAMPER": {
+          "mean": 0.7,
+          "std": 0.4830458915396479
+        },
+        "STUCK_METER": {
+          "mean": 0.6,
+          "std": 0.5163977794943222
+        },
+        "WRONG_MAPPING": {
+          "mean": 0.5,
+          "std": 0.5270462766947299
+        }
+      }
+    },
+    "C": {
+      "zone_localisation_accuracy": {
+        "mean": 0.5309523809523808,
+        "std": 0.10228554678634073
+      },
+      "event_recall": {
+        "mean": 0.5309523809523808,
+        "std": 0.10228554678634073
+      },
+      "case_precision": {
+        "mean": 0.5433333333333333,
+        "std": 0.09819356042349199
+      },
+      "customer_top3_hit_rate": {
+        "mean": 0.16,
+        "std": 0.12649110640673517
+      },
+      "median_detection_delay_days": {
+        "mean": 0.0,
+        "std": 0.0
+      },
+      "false_inspections_per_100_transformer_days": {
+        "mean": 0.8012820512820513,
+        "std": 0.22663678884184216
+      },
+      "innocent_lookalike_false_positive_rate": {
+        "mean": 0.08,
+        "std": 0.10327955589886445
+      },
+      "recovered_simulated_kwh_top5": {
+        "mean": 1262.5316960334778,
+        "std": 1127.9632252139947
+      },
+      "events": {
+        "mean": 6.4,
+        "std": 0.5163977794943222
+      },
+      "cases": {
+        "mean": 5.7,
+        "std": 0.9486832980505138
+      },
+      "per_kind_recall": {
+        "BYPASS": {
+          "mean": 0.3,
+          "std": 0.4830458915396479
+        },
+        "FEEDER_SEGMENT": {
+          "mean": 0.4,
+          "std": 0.5163977794943223
+        },
+        "ILLEGAL_TAP": {
+          "mean": 0.6,
+          "std": 0.5163977794943222
+        },
+        "NIGHT_THEFT": {
+          "mean": 0.2,
+          "std": 0.42163702135578396
+        },
+        "STEP_TAMPER": {
+          "mean": 0.8,
+          "std": 0.4216370213557839
+        },
+        "STUCK_METER": {
+          "mean": 0.4,
+          "std": 0.5163977794943223
+        },
+        "WRONG_MAPPING": {
+          "mean": 0.7,
+          "std": 0.4830458915396479
+        }
+      }
+    }
+  },
+  "per_seed": [
+    {
+      "seed": 101,
+      "systems": {
+        "A": {
+          "zone_localisation_accuracy": 0.42857142857142855,
+          "event_recall": 0.42857142857142855,
+          "case_precision": 0.2727272727272727,
+          "customer_top3_hit_rate": 0.6,
+          "median_detection_delay_days": 2.0,
+          "false_inspections_per_100_transformer_days": 2.564102564102564,
+          "innocent_lookalike_false_positive_rate": 0.6,
+          "recovered_simulated_kwh_top5": 500.7706298828125,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 0.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 0.0
+          },
+          "events": 7,
+          "cases": 11
+        },
+        "B": {
+          "zone_localisation_accuracy": 0.5714285714285714,
+          "event_recall": 0.5714285714285714,
+          "case_precision": 0.6666666666666666,
+          "customer_top3_hit_rate": 0.4,
+          "median_detection_delay_days": 2.0,
+          "false_inspections_per_100_transformer_days": 1.282051282051282,
+          "innocent_lookalike_false_positive_rate": 0.0,
+          "recovered_simulated_kwh_top5": 977.1054382324219,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 0.0
+          },
+          "events": 7,
+          "cases": 12
+        },
+        "C": {
+          "zone_localisation_accuracy": 0.42857142857142855,
+          "event_recall": 0.42857142857142855,
+          "case_precision": 0.6,
+          "customer_top3_hit_rate": 0.2,
+          "median_detection_delay_days": 0.0,
+          "false_inspections_per_100_transformer_days": 0.641025641025641,
+          "innocent_lookalike_false_positive_rate": 0.2,
+          "recovered_simulated_kwh_top5": 3415.801727294922,
+          "per_kind_recall": {
+            "BYPASS": 0.0,
+            "FEEDER_SEGMENT": 1.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 0.0
+          },
+          "events": 7,
+          "cases": 5
+        }
+      }
+    },
+    {
+      "seed": 102,
+      "systems": {
+        "A": {
+          "zone_localisation_accuracy": 0.5,
+          "event_recall": 0.5,
+          "case_precision": 0.3,
+          "customer_top3_hit_rate": 0.6,
+          "median_detection_delay_days": 2.0,
+          "false_inspections_per_100_transformer_days": 2.2435897435897436,
+          "innocent_lookalike_false_positive_rate": 1.0,
+          "recovered_simulated_kwh_top5": 120.62276458740234,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 0.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 0.0
+          },
+          "events": 6,
+          "cases": 10
+        },
+        "B": {
+          "zone_localisation_accuracy": 0.6666666666666666,
+          "event_recall": 0.6666666666666666,
+          "case_precision": 0.3333333333333333,
+          "customer_top3_hit_rate": 0.6,
+          "median_detection_delay_days": 9.5,
+          "false_inspections_per_100_transformer_days": 1.9230769230769231,
+          "innocent_lookalike_false_positive_rate": 0.4,
+          "recovered_simulated_kwh_top5": 650.22998046875,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 1.0,
+            "STEP_TAMPER": 0.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 0.0
+          },
+          "events": 6,
+          "cases": 9
+        },
+        "C": {
+          "zone_localisation_accuracy": 0.6666666666666666,
+          "event_recall": 0.6666666666666666,
+          "case_precision": 0.6666666666666666,
+          "customer_top3_hit_rate": 0.2,
+          "median_detection_delay_days": 0.0,
+          "false_inspections_per_100_transformer_days": 0.641025641025641,
+          "innocent_lookalike_false_positive_rate": 0.0,
+          "recovered_simulated_kwh_top5": 181.25682067871094,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 0.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 6,
+          "cases": 6
+        }
+      }
+    },
+    {
+      "seed": 103,
+      "systems": {
+        "A": {
+          "zone_localisation_accuracy": 0.5,
+          "event_recall": 0.5,
+          "case_precision": 0.3333333333333333,
+          "customer_top3_hit_rate": 0.6,
+          "median_detection_delay_days": 3.0,
+          "false_inspections_per_100_transformer_days": 1.9230769230769231,
+          "innocent_lookalike_false_positive_rate": 1.0,
+          "recovered_simulated_kwh_top5": 428.91156005859375,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 0.0,
+            "NIGHT_THEFT": 1.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 0.0
+          },
+          "events": 6,
+          "cases": 9
+        },
+        "B": {
+          "zone_localisation_accuracy": 0.5,
+          "event_recall": 0.5,
+          "case_precision": 0.5,
+          "customer_top3_hit_rate": 0.2,
+          "median_detection_delay_days": 5.0,
+          "false_inspections_per_100_transformer_days": 1.6025641025641024,
+          "innocent_lookalike_false_positive_rate": 0.6,
+          "recovered_simulated_kwh_top5": 428.91156005859375,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 0.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 6,
+          "cases": 10
+        },
+        "C": {
+          "zone_localisation_accuracy": 0.3333333333333333,
+          "event_recall": 0.3333333333333333,
+          "case_precision": 0.4,
+          "customer_top3_hit_rate": 0.2,
+          "median_detection_delay_days": 0.0,
+          "false_inspections_per_100_transformer_days": 0.641025641025641,
+          "innocent_lookalike_false_positive_rate": 0.2,
+          "recovered_simulated_kwh_top5": 428.91156005859375,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 0.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 0.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 6,
+          "cases": 5
+        }
+      }
+    },
+    {
+      "seed": 104,
+      "systems": {
+        "A": {
+          "zone_localisation_accuracy": 0.6666666666666666,
+          "event_recall": 0.6666666666666666,
+          "case_precision": 0.3333333333333333,
+          "customer_top3_hit_rate": 0.4,
+          "median_detection_delay_days": 2.0,
+          "false_inspections_per_100_transformer_days": 2.564102564102564,
+          "innocent_lookalike_false_positive_rate": 1.0,
+          "recovered_simulated_kwh_top5": 1157.9971313476562,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 1.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 0.0
+          },
+          "events": 6,
+          "cases": 12
+        },
+        "B": {
+          "zone_localisation_accuracy": 0.5,
+          "event_recall": 0.5,
+          "case_precision": 0.5,
+          "customer_top3_hit_rate": 0.4,
+          "median_detection_delay_days": 3.0,
+          "false_inspections_per_100_transformer_days": 1.9230769230769231,
+          "innocent_lookalike_false_positive_rate": 0.4,
+          "recovered_simulated_kwh_top5": 1157.9971313476562,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 0.0
+          },
+          "events": 6,
+          "cases": 12
+        },
+        "C": {
+          "zone_localisation_accuracy": 0.5,
+          "event_recall": 0.5,
+          "case_precision": 0.5,
+          "customer_top3_hit_rate": 0.4,
+          "median_detection_delay_days": 0.0,
+          "false_inspections_per_100_transformer_days": 0.9615384615384616,
+          "innocent_lookalike_false_positive_rate": 0.0,
+          "recovered_simulated_kwh_top5": 927.4997863769531,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 0.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 0.0
+          },
+          "events": 6,
+          "cases": 6
+        }
+      }
+    },
+    {
+      "seed": 105,
+      "systems": {
+        "A": {
+          "zone_localisation_accuracy": 0.8571428571428571,
+          "event_recall": 0.8571428571428571,
+          "case_precision": 0.5833333333333334,
+          "customer_top3_hit_rate": 0.6,
+          "median_detection_delay_days": 2.0,
+          "false_inspections_per_100_transformer_days": 1.6025641025641024,
+          "innocent_lookalike_false_positive_rate": 1.0,
+          "recovered_simulated_kwh_top5": 899.9725875854492,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 1.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 7,
+          "cases": 12
+        },
+        "B": {
+          "zone_localisation_accuracy": 0.7142857142857143,
+          "event_recall": 0.7142857142857143,
+          "case_precision": 1.0,
+          "customer_top3_hit_rate": 0.6,
+          "median_detection_delay_days": 5.0,
+          "false_inspections_per_100_transformer_days": 0.0,
+          "innocent_lookalike_false_positive_rate": 0.4,
+          "recovered_simulated_kwh_top5": 899.9725875854492,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 7,
+          "cases": 6
+        },
+        "C": {
+          "zone_localisation_accuracy": 0.5714285714285714,
+          "event_recall": 0.5714285714285714,
+          "case_precision": 0.6,
+          "customer_top3_hit_rate": 0.2,
+          "median_detection_delay_days": 0.0,
+          "false_inspections_per_100_transformer_days": 0.641025641025641,
+          "innocent_lookalike_false_positive_rate": 0.0,
+          "recovered_simulated_kwh_top5": 1730.1372909545898,
+          "per_kind_recall": {
+            "BYPASS": 0.0,
+            "FEEDER_SEGMENT": 1.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 7,
+          "cases": 5
+        }
+      }
+    },
+    {
+      "seed": 106,
+      "systems": {
+        "A": {
+          "zone_localisation_accuracy": 0.5,
+          "event_recall": 0.5,
+          "case_precision": 0.4444444444444444,
+          "customer_top3_hit_rate": 0.2,
+          "median_detection_delay_days": 2.0,
+          "false_inspections_per_100_transformer_days": 1.6025641025641024,
+          "innocent_lookalike_false_positive_rate": 1.0,
+          "recovered_simulated_kwh_top5": 221.8165283203125,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 0.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 6,
+          "cases": 9
+        },
+        "B": {
+          "zone_localisation_accuracy": 0.5,
+          "event_recall": 0.5,
+          "case_precision": 0.3333333333333333,
+          "customer_top3_hit_rate": 0.0,
+          "median_detection_delay_days": 3.0,
+          "false_inspections_per_100_transformer_days": 2.564102564102564,
+          "innocent_lookalike_false_positive_rate": 0.6,
+          "recovered_simulated_kwh_top5": 717.3800048828125,
+          "per_kind_recall": {
+            "BYPASS": 0.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 0.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 6,
+          "cases": 12
+        },
+        "C": {
+          "zone_localisation_accuracy": 0.6666666666666666,
+          "event_recall": 0.6666666666666666,
+          "case_precision": 0.6,
+          "customer_top3_hit_rate": 0.2,
+          "median_detection_delay_days": 0.0,
+          "false_inspections_per_100_transformer_days": 0.641025641025641,
+          "innocent_lookalike_false_positive_rate": 0.0,
+          "recovered_simulated_kwh_top5": 915.6220855712891,
+          "per_kind_recall": {
+            "BYPASS": 0.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 6,
+          "cases": 5
+        }
+      }
+    },
+    {
+      "seed": 107,
+      "systems": {
+        "A": {
+          "zone_localisation_accuracy": 0.8333333333333334,
+          "event_recall": 0.8333333333333334,
+          "case_precision": 0.46153846153846156,
+          "customer_top3_hit_rate": 0.6,
+          "median_detection_delay_days": 2.0,
+          "false_inspections_per_100_transformer_days": 2.2435897435897436,
+          "innocent_lookalike_false_positive_rate": 1.0,
+          "recovered_simulated_kwh_top5": 289.00511741638184,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 1.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 0.0
+          },
+          "events": 6,
+          "cases": 13
+        },
+        "B": {
+          "zone_localisation_accuracy": 0.6666666666666666,
+          "event_recall": 0.6666666666666666,
+          "case_precision": 0.5833333333333334,
+          "customer_top3_hit_rate": 0.4,
+          "median_detection_delay_days": 4.0,
+          "false_inspections_per_100_transformer_days": 1.6025641025641024,
+          "innocent_lookalike_false_positive_rate": 0.8,
+          "recovered_simulated_kwh_top5": 0.0,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 0.0
+          },
+          "events": 6,
+          "cases": 12
+        },
+        "C": {
+          "zone_localisation_accuracy": 0.5,
+          "event_recall": 0.5,
+          "case_precision": 0.5,
+          "customer_top3_hit_rate": 0.0,
+          "median_detection_delay_days": 0.0,
+          "false_inspections_per_100_transformer_days": 0.9615384615384616,
+          "innocent_lookalike_false_positive_rate": 0.2,
+          "recovered_simulated_kwh_top5": 325.69825553894043,
+          "per_kind_recall": {
+            "BYPASS": 0.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 1.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 0.0
+          },
+          "events": 6,
+          "cases": 6
+        }
+      }
+    },
+    {
+      "seed": 108,
+      "systems": {
+        "A": {
+          "zone_localisation_accuracy": 0.7142857142857143,
+          "event_recall": 0.7142857142857143,
+          "case_precision": 0.3333333333333333,
+          "customer_top3_hit_rate": 0.6,
+          "median_detection_delay_days": 2.0,
+          "false_inspections_per_100_transformer_days": 1.9230769230769231,
+          "innocent_lookalike_false_positive_rate": 0.8,
+          "recovered_simulated_kwh_top5": 388.86264419555664,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 0.0,
+            "NIGHT_THEFT": 1.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 7,
+          "cases": 9
+        },
+        "B": {
+          "zone_localisation_accuracy": 0.5714285714285714,
+          "event_recall": 0.5714285714285714,
+          "case_precision": 0.7,
+          "customer_top3_hit_rate": 0.4,
+          "median_detection_delay_days": 5.5,
+          "false_inspections_per_100_transformer_days": 0.9615384615384616,
+          "innocent_lookalike_false_positive_rate": 0.4,
+          "recovered_simulated_kwh_top5": 879.8407897949219,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 7,
+          "cases": 10
+        },
+        "C": {
+          "zone_localisation_accuracy": 0.5714285714285714,
+          "event_recall": 0.5714285714285714,
+          "case_precision": 0.6666666666666666,
+          "customer_top3_hit_rate": 0.2,
+          "median_detection_delay_days": 0.0,
+          "false_inspections_per_100_transformer_days": 0.641025641025641,
+          "innocent_lookalike_false_positive_rate": 0.2,
+          "recovered_simulated_kwh_top5": 2730.810272216797,
+          "per_kind_recall": {
+            "BYPASS": 0.0,
+            "FEEDER_SEGMENT": 1.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 7,
+          "cases": 6
+        }
+      }
+    },
+    {
+      "seed": 109,
+      "systems": {
+        "A": {
+          "zone_localisation_accuracy": 0.5714285714285714,
+          "event_recall": 0.5714285714285714,
+          "case_precision": 0.4444444444444444,
+          "customer_top3_hit_rate": 0.6,
+          "median_detection_delay_days": 2.0,
+          "false_inspections_per_100_transformer_days": 1.6025641025641024,
+          "innocent_lookalike_false_positive_rate": 0.8,
+          "recovered_simulated_kwh_top5": 275.2427062988281,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 0.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 7,
+          "cases": 9
+        },
+        "B": {
+          "zone_localisation_accuracy": 0.5714285714285714,
+          "event_recall": 0.5714285714285714,
+          "case_precision": 0.7,
+          "customer_top3_hit_rate": 0.6,
+          "median_detection_delay_days": 5.0,
+          "false_inspections_per_100_transformer_days": 0.9615384615384616,
+          "innocent_lookalike_false_positive_rate": 0.2,
+          "recovered_simulated_kwh_top5": 358.9528579711914,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 0.0
+          },
+          "events": 7,
+          "cases": 10
+        },
+        "C": {
+          "zone_localisation_accuracy": 0.5714285714285714,
+          "event_recall": 0.5714285714285714,
+          "case_precision": 0.5,
+          "customer_top3_hit_rate": 0.0,
+          "median_detection_delay_days": 0.0,
+          "false_inspections_per_100_transformer_days": 1.282051282051282,
+          "innocent_lookalike_false_positive_rate": 0.0,
+          "recovered_simulated_kwh_top5": 1794.4289245605469,
+          "per_kind_recall": {
+            "BYPASS": 0.0,
+            "FEEDER_SEGMENT": 1.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 0.0,
+            "STEP_TAMPER": 0.0,
+            "STUCK_METER": 1.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 7,
+          "cases": 8
+        }
+      }
+    },
+    {
+      "seed": 110,
+      "systems": {
+        "A": {
+          "zone_localisation_accuracy": 0.6666666666666666,
+          "event_recall": 0.6666666666666666,
+          "case_precision": 0.375,
+          "customer_top3_hit_rate": 0.2,
+          "median_detection_delay_days": 5.0,
+          "false_inspections_per_100_transformer_days": 1.6025641025641024,
+          "innocent_lookalike_false_positive_rate": 1.0,
+          "recovered_simulated_kwh_top5": 202.80291271209717,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 0.0,
+            "NIGHT_THEFT": 1.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 6,
+          "cases": 8
+        },
+        "B": {
+          "zone_localisation_accuracy": 0.8333333333333334,
+          "event_recall": 0.8333333333333334,
+          "case_precision": 0.5833333333333334,
+          "customer_top3_hit_rate": 0.4,
+          "median_detection_delay_days": 9.0,
+          "false_inspections_per_100_transformer_days": 1.6025641025641024,
+          "innocent_lookalike_false_positive_rate": 0.8,
+          "recovered_simulated_kwh_top5": 430.3857526779175,
+          "per_kind_recall": {
+            "BYPASS": 1.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 1.0,
+            "NIGHT_THEFT": 1.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 6,
+          "cases": 12
+        },
+        "C": {
+          "zone_localisation_accuracy": 0.5,
+          "event_recall": 0.5,
+          "case_precision": 0.4,
+          "customer_top3_hit_rate": 0.0,
+          "median_detection_delay_days": 0.0,
+          "false_inspections_per_100_transformer_days": 0.9615384615384616,
+          "innocent_lookalike_false_positive_rate": 0.0,
+          "recovered_simulated_kwh_top5": 175.15023708343506,
+          "per_kind_recall": {
+            "BYPASS": 0.0,
+            "FEEDER_SEGMENT": 0.0,
+            "ILLEGAL_TAP": 0.0,
+            "NIGHT_THEFT": 1.0,
+            "STEP_TAMPER": 1.0,
+            "STUCK_METER": 0.0,
+            "WRONG_MAPPING": 1.0
+          },
+          "events": 6,
+          "cases": 5
+        }
+      }
+    }
+  ]
+}

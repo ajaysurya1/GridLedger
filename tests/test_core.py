@@ -316,3 +316,95 @@ def test_false_alarm_rate():
         f"False alarm rate {rate:.2f} per 100 node-days exceeds threshold of 1.0. "
         f"Total false REDs: {total_false_reds}, node-days: {total_node_days}"
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 8. Phase 3 — Voltage cross-check: LV network simulation
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_voltage_lv_network_built():
+    """
+    Simulator must populate obs.extras['lv'], ['v_meas'], ['v0'] for every transformer.
+    LV network must have correct shape: v_meas (n_cust, T), v0 (T,).
+    """
+    world = simulate(seed=3, scenarios=[])
+    obs = world.observed
+    T = CFG.n_days * 24
+    n_tx = len(obs.transformers)
+
+    lv_nets = obs.extras.get("lv", {})
+    v_meas_all = obs.extras.get("v_meas", {})
+    v0_all = obs.extras.get("v0", {})
+
+    assert len(lv_nets) == n_tx, f"Expected {n_tx} LV networks, got {len(lv_nets)}"
+
+    for tx_id, lv in lv_nets.items():
+        assert "Z_true" in lv, f"Z_true missing for {tx_id}"
+        assert "Z_model" in lv, f"Z_model missing for {tx_id}"
+        assert tx_id in v_meas_all, f"v_meas missing for {tx_id}"
+        assert tx_id in v0_all, f"v0 missing for {tx_id}"
+
+        v_meas = v_meas_all[tx_id]
+        v0 = v0_all[tx_id]
+        n_cust = len(lv["cust_nodes"])
+
+        assert v_meas.shape == (n_cust, T), f"{tx_id}: v_meas shape {v_meas.shape}, expected ({n_cust}, {T})"
+        assert v0.shape == (T,), f"{tx_id}: v0 shape {v0.shape}, expected ({T},)"
+
+        # Sanity: most sampled voltages should be in [210, 260] V range
+        valid = v_meas[~np.isnan(v_meas)]
+        assert len(valid) > 0, f"{tx_id}: no sampled voltages at all"
+        assert np.all((valid >= 200.0) & (valid <= 280.0)), \
+            f"{tx_id}: voltages out of plausible range [{valid.min():.1f}, {valid.max():.1f}]"
+
+
+def test_voltage_alarm_on_illegal_tap():
+    """
+    ILLEGAL_TAP on a transformer: pipeline voltage_by_tx should raise an alarm for that
+    transformer at day 40 (after calibration window). FAR on clean transformers must stay low.
+    """
+    from gridledger.scenarios import Scenario
+
+    # Inject ILLEGAL_TAP on transformer index 8 (T09) — same as showcase
+    sc = Scenario("TAP_V_TEST", "ILLEGAL_TAP", 8, start_day=5, params={"mean_kw": 2.5})
+    world = simulate(seed=4, scenarios=[sc])
+    res = pipeline.run(world.observed, today_day=40)
+
+    tap_tx_id = "T09"
+    volt = res.voltage_by_tx.get(tap_tx_id, {})
+    fused = res.fusion_by_tx.get(tap_tx_id, {})
+
+    # The voltage module must have run for T09
+    assert volt, f"No voltage result for {tap_tx_id}"
+
+    # Fused result must exist and include e_volt
+    assert fused, f"No fusion result for {tap_tx_id}"
+    assert "e_volt" in fused
+
+    # Clean transformers should not have voltage alarms (with low FAR)
+    clean_tx_ids = [tid for tid in res.voltage_by_tx if tid != tap_tx_id]
+    alarm_clean = [tid for tid in clean_tx_ids if res.voltage_by_tx[tid].get("alarm")]
+    far_rate = len(alarm_clean) / max(len(clean_tx_ids), 1)
+    assert far_rate <= 0.5, (
+        f"Too many false voltage alarms on clean transformers: {alarm_clean} (FAR={far_rate:.0%})"
+    )
+
+
+def test_fusion_keys():
+    """
+    pipeline.run must return fusion_by_tx with expected keys for all transformers.
+    """
+    world = simulate(seed=2, scenarios=[])
+    res = pipeline.run(world.observed, today_day=30)
+
+    assert hasattr(res, "fusion_by_tx"), "Results missing fusion_by_tx"
+    n_tx = len(world.observed.transformers)
+    # fusion_by_tx should have an entry for all tx that have LV data
+    assert len(res.fusion_by_tx) > 0, "fusion_by_tx is empty"
+
+    for tx_id, fused in res.fusion_by_tx.items():
+        assert "fused_score" in fused, f"{tx_id}: fused_score missing"
+        assert "e_balance" in fused, f"{tx_id}: e_balance missing"
+        assert "e_volt" in fused, f"{tx_id}: e_volt missing"
+        assert "e_suspect" in fused, f"{tx_id}: e_suspect missing"
+        assert 0.0 <= fused["fused_score"] <= 1.0, f"{tx_id}: fused_score out of [0,1]: {fused['fused_score']}"

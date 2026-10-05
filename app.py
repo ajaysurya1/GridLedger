@@ -6,12 +6,11 @@ All heavy computation lives behind st.cache_resource / st.cache_data.
 """
 from __future__ import annotations
 
-import json
 import streamlit as st
 
 # ── Page config (must be first Streamlit call) ────────────────────────────────
 st.set_page_config(
-    page_title="GridLedger — NTL Detection",
+    page_title="GridLedger — Energy review",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -27,6 +26,20 @@ html, body, [data-testid="stAppViewContainer"] {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background: #0D0D0F;
 }
+.app-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    padding: 0.45rem 1rem;
+    background: rgba(13,13,15,0.96);
+    border-top: 1px solid #334155;
+    color: #CBD5E1;
+    text-align: center;
+    font-size: 0.78rem;
+}
+[data-testid="stAppViewContainer"] > .main { padding-bottom: 2.2rem; }
 
 /* Sidebar */
 [data-testid="stSidebar"] {
@@ -87,6 +100,14 @@ html, body, [data-testid="stAppViewContainer"] {
 .kpi-amber { color: #F5A524; }
 .kpi-green { color: #30A46C; }
 .kpi-blue { color: #60A5FA; }
+[data-testid="stMetric"] {
+    background: #18181B;
+    border: 1px solid #27272A;
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+}
+[data-testid="stMetricLabel"] { color: #CBD5E1; }
+[data-testid="stMetricValue"] { color: #F8FAFC; }
 
 /* Status badges */
 .badge-red {
@@ -280,6 +301,10 @@ def _init_state():
         st.session_state.selected_node = None
     if "active_page" not in st.session_state:
         st.session_state.active_page = "Command Center"
+    if "data_mode_active" not in st.session_state:
+        st.session_state.data_mode_active = False
+    if "how_to_read_dismissed" not in st.session_state:
+        st.session_state.how_to_read_dismissed = False
 
 
 _init_state()
@@ -297,7 +322,9 @@ def _get_world(preset: str, random_seed: int):
     elif preset == "Clean grid":
         return simulate(seed=7, scenarios=[])
     else:  # Random
-        scenarios = random_scenarios(world_seed=7, random_seed=random_seed)
+        topology = simulate(seed=7, scenarios=[]).observed
+        rng = __import__("numpy").random.default_rng([random_seed, 7])
+        scenarios = random_scenarios(rng, topology, 60)
         return simulate(seed=7, scenarios=scenarios)
 
 
@@ -314,75 +341,85 @@ def _render_sidebar():
 
     with st.sidebar:
         st.markdown('<div class="gl-logo">⚡ GridLedger</div>', unsafe_allow_html=True)
-        st.markdown('<div class="gl-tagline">Non-Technical Loss Detection</div>', unsafe_allow_html=True)
-        st.markdown('<span class="demo-badge">Simulated Data</span>', unsafe_allow_html=True)
+        st.markdown('<div class="gl-tagline">Find where energy stops matching</div>', unsafe_allow_html=True)
+        mode_label = "Uploaded data" if st.session_state.data_mode_active else "Simulated data"
+        st.markdown(f'<span class="demo-badge">{mode_label}</span>', unsafe_allow_html=True)
 
-        st.markdown('<div class="section-header">Demo Clock</div>', unsafe_allow_html=True)
+        if not st.session_state.data_mode_active:
+            st.markdown('<div class="section-header">Timeline</div>', unsafe_allow_html=True)
 
-        today = st.session_state.today_day
-        st.markdown(f"""
-        <div class="clock-display">
-            <div class="clock-day">Day {today}</div>
-            <div class="clock-label">of {CFG.n_days} simulated days</div>
-        </div>
-        """, unsafe_allow_html=True)
+            today = st.session_state.today_day
+            st.markdown(f"""
+            <div class="clock-display">
+                <div class="clock-day">Day {today}</div>
+                <div class="clock-label">of {CFG.n_days} simulated days</div>
+            </div>
+            """, unsafe_allow_html=True)
 
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("+1", use_container_width=True):
-                st.session_state.today_day = min(st.session_state.today_day + 1, CFG.n_days)
-                st.rerun()
-        with col2:
-            if st.button("+5", use_container_width=True):
-                st.session_state.today_day = min(st.session_state.today_day + 5, CFG.n_days)
-                st.rerun()
-        with col3:
-            if st.button("↺", use_container_width=True):
-                st.session_state.today_day = CFG.default_today_day
-                st.rerun()
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                if st.button("+1", use_container_width=True):
+                    st.session_state.today_day = min(st.session_state.today_day + 1, CFG.n_days)
+                    st.rerun()
+            with col2:
+                if st.button("+5", use_container_width=True):
+                    st.session_state.today_day = min(st.session_state.today_day + 5, CFG.n_days)
+                    st.rerun()
+            with col3:
+                if st.button("↺", use_container_width=True):
+                    st.session_state.today_day = CFG.default_today_day
+                    st.rerun()
 
-        st.markdown('<div class="section-header">Scenario Preset</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-header">Show data</div>', unsafe_allow_html=True)
 
-        preset = st.selectbox(
-            "Preset",
-            ["Showcase", "Clean grid", "Random"],
-            index=["Showcase", "Clean grid", "Random"].index(st.session_state.scenario_preset),
-            label_visibility="collapsed",
-        )
-        if preset != st.session_state.scenario_preset:
-            st.session_state.scenario_preset = preset
-            st.session_state.selected_node = None
-            st.rerun()
-
-        if preset == "Random":
-            rseed = st.number_input("Random seed", value=st.session_state.random_seed, min_value=0, step=1)
-            if rseed != st.session_state.random_seed:
-                st.session_state.random_seed = int(rseed)
+            preset = st.selectbox(
+                "Preset",
+                ["Showcase", "Clean grid", "Random"],
+                index=["Showcase", "Clean grid", "Random"].index(st.session_state.scenario_preset),
+                label_visibility="collapsed",
+            )
+            if preset != st.session_state.scenario_preset:
+                st.session_state.scenario_preset = preset
                 st.session_state.selected_node = None
                 st.rerun()
+
+            if preset == "Random":
+                rseed = st.number_input("Random seed", value=st.session_state.random_seed, min_value=0, step=1)
+                if rseed != st.session_state.random_seed:
+                    st.session_state.random_seed = int(rseed)
+                    st.session_state.selected_node = None
+                    st.rerun()
 
         # Navigation
         st.markdown('<div class="section-header">Navigation</div>', unsafe_allow_html=True)
 
-        pages = {
-            "Command Center": "🗺️",
-            "Case File": "📋",
-            "Scenario Lab": "🧪",
-        }
+        if st.session_state.data_mode_active:
+            pages = {"Bring your data": "⇧", "How it works": "i"}
+        else:
+            pages = {
+                "Command Center": "▦",
+                "Leak details": "□",
+                "Scenarios": "◇",
+                "Benchmark": "▥",
+                "Bring your data": "⇧",
+                "How it works": "i",
+            }
+        page_keys = {"Leak details": "Case File", "Scenarios": "Scenario Lab"}
         for page, icon in pages.items():
-            is_active = st.session_state.active_page == page
+            internal_page = page_keys.get(page, page)
+            is_active = st.session_state.active_page == internal_page
             btn_style = "primary" if is_active else "secondary"
             if st.button(f"{icon} {page}", use_container_width=True, type=btn_style if is_active else "secondary"):
-                st.session_state.active_page = page
+                st.session_state.active_page = internal_page
                 st.rerun()
 
         # Status legend
-        st.markdown('<div class="section-header">Legend</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header">What statuses mean</div>', unsafe_allow_html=True)
         st.markdown("""
         <div style="font-size:0.78rem; line-height:2;">
-            <span class="badge-red">RED</span> Active anomaly run<br>
-            <span class="badge-amber">AMBER</span> Watch — elevated risk<br>
-            <span class="badge-green">GREEN</span> Normal balance
+            <span class="badge-red">▲ Review</span> Persistent energy gap; check the case<br>
+            <span class="badge-amber">● Watch</span> Short-lived gap or data-quality issue<br>
+            <span class="badge-green">■ Balanced</span> No current persistent gap
         </div>
         """, unsafe_allow_html=True)
 
@@ -390,19 +427,32 @@ def _render_sidebar():
 # ── Main ──────────────────────────────────────────────────────────────────────
 _render_sidebar()
 
-# Preload data
-world = _get_world(st.session_state.scenario_preset, st.session_state.random_seed)
-results = _get_results(st.session_state.scenario_preset, st.session_state.random_seed, st.session_state.today_day)
-
 # Route to active page
 page = st.session_state.active_page
+try:
+    if page == "Bring your data":
+        from views import data_page
+        data_page.render()
+    elif page == "Benchmark":
+        from views import benchmark
+        benchmark.render()
+    elif page in ("Method", "How it works"):
+        from views import about
+        about.render()
+    else:
+        world = _get_world(st.session_state.scenario_preset, st.session_state.random_seed)
+        results = _get_results(st.session_state.scenario_preset, st.session_state.random_seed, st.session_state.today_day)
+        if page == "Command Center":
+            from views import command_center
+            command_center.render(world, results)
+        elif page in ("Case File", "Leak details"):
+            from views import case_file
+            case_file.render(world, results)
+        elif page in ("Scenario Lab", "Scenarios"):
+            from views import scenario_lab
+            scenario_lab.render(world, results)
+except Exception as exc:
+    st.error(f"This page could not load. Your data is unchanged. Details: {exc}")
 
-if page == "Command Center":
-    from views import command_center
-    command_center.render(world, results)
-elif page == "Case File":
-    from views import case_file
-    case_file.render(world, results)
-elif page == "Scenario Lab":
-    from views import scenario_lab
-    scenario_lab.render(world, results)
+footer = "Real data — decision support, not an accusation." if st.session_state.data_mode_active else "Simulated data — decision support, not an accusation."
+st.markdown(f'<div class="app-footer">{footer}</div>', unsafe_allow_html=True)

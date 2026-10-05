@@ -111,41 +111,84 @@ def showcase_scenarios(world_seed: int = 7, cfg: Config = CFG) -> List[Scenario]
 # Random scenarios (seeded)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def random_scenarios(world_seed: int, random_seed: int, cfg: Config = CFG) -> List[Scenario]:
-    """
-    Generate a random-but-reproducible set of scenarios for evaluation.
-    Used by eval harness (phase 5). Detection code never calls this.
-    """
-    from gridledger.simulator import simulate
+def random_scenarios(
+    rng: np.random.Generator,
+    topo: Any,
+    n_days: int,
+) -> List[Scenario]:
+    """Generate one reproducible mixed world from a clean topology.
 
-    clean = simulate(world_seed, scenarios=[], cfg=cfg)
-    obs = clean.observed
-    tx_true = clean.truth.tx_true
-    n_c = len(obs.customers)
-    n_tx = len(obs.transformers)
-    n_f = len(obs.feeders)
+    ``topo`` may be an ``Observed`` instance or a ``World`` containing one.
+    Only reference indices are used; callers must pass a clean topology whose
+    mapping records describe the physical customer-to-transformer assignment.
+    """
+    obs = topo.observed if hasattr(topo, "observed") else topo
+    customers = obs.customers
+    transformers = obs.transformers
+    feeders = obs.feeders
+    mapping = obs.mapping.sort_values("valid_from_day").drop_duplicates("meter_idx", keep="first")
+    tx_by_customer = np.full(len(customers), -1, dtype=int)
+    tx_by_customer[mapping["meter_idx"].to_numpy(dtype=int)] = mapping["tx_idx"].to_numpy(dtype=int)
 
-    rng = np.random.default_rng([random_seed, _str_key("random_scenarios")])
+    def start_day() -> int:
+        return int(rng.integers(18, min(35, n_days)))
+
+    def customer_on_tx(tx_idx: int | None = None) -> int:
+        choices = np.arange(len(customers)) if tx_idx is None else np.flatnonzero(tx_by_customer == tx_idx)
+        return int(rng.choice(choices))
+
+    def tx_for_customer(ci: int) -> int:
+        return int(tx_by_customer[ci])
+
+    def tx_target() -> int:
+        return int(rng.integers(0, len(transformers)))
+
     scenarios: List[Scenario] = []
+    theft_customers: List[int] = []
 
-    # Random BYPASS
-    ci = int(rng.integers(0, n_c))
-    sd = int(rng.integers(10, 30))
-    k = float(rng.uniform(0.4, 0.6))
-    scenarios.append(Scenario("R_BYPASS", "BYPASS", ci, start_day=sd, params={"k": k}))
+    ci = customer_on_tx()
+    theft_customers.append(ci)
+    scenarios.append(Scenario("R_BYPASS", "BYPASS", ci, start_day(), params={"k": float(rng.uniform(0.4, 0.6))}))
 
-    # Random ILLEGAL_TAP
-    ji = int(rng.integers(0, n_tx))
-    sd = int(rng.integers(10, 30))
-    kw = float(rng.uniform(1.0, 2.5))
-    scenarios.append(Scenario("R_TAP", "ILLEGAL_TAP", ji, start_day=sd, params={"mean_kw": kw}))
+    ci = customer_on_tx()
+    theft_customers.append(ci)
+    scenarios.append(Scenario("R_NIGHT", "NIGHT_THEFT", ci, start_day()))
 
-    # Random FEEDER_SEGMENT
-    fi = int(rng.integers(0, n_f))
-    sd = int(rng.integers(10, 30))
-    kw = float(rng.uniform(3.0, 6.0))
-    scenarios.append(Scenario("R_SEG", "FEEDER_SEGMENT", fi, start_day=sd, params={"kw": kw}))
+    ci = customer_on_tx()
+    theft_customers.append(ci)
+    scenarios.append(Scenario("R_STEP", "STEP_TAMPER", ci, start_day()))
 
+    tx_idx = tx_target()
+    scenarios.append(Scenario("R_TAP", "ILLEGAL_TAP", tx_idx, start_day(), params={"mean_kw": float(rng.uniform(1.0, 2.5))}))
+
+    ci = customer_on_tx()
+    wrong_choices = np.flatnonzero(np.arange(len(transformers)) != tx_for_customer(ci))
+    wrong_tx_idx = int(rng.choice(wrong_choices))
+    scenarios.append(Scenario("R_MAPPING", "WRONG_MAPPING", ci, start_day(), params={"wrong_tx_idx": wrong_tx_idx}))
+
+    ci = customer_on_tx()
+    scenarios.append(Scenario("R_STUCK", "STUCK_METER", ci, start_day()))
+
+    if rng.random() < 0.60:
+        fi = int(rng.integers(0, len(feeders)))
+        scenarios.append(Scenario("R_SEGMENT", "FEEDER_SEGMENT", fi, start_day(), params={"kw": float(rng.uniform(3.0, 6.0))}))
+
+    for idx in range(2):
+        scenarios.append(Scenario(f"R_VACANT_{idx + 1}", "VACANT", customer_on_tx(), start_day(), innocent=True))
+
+    solar_target = customer_on_tx(tx_for_customer(theft_customers[0]))
+    scenarios.append(Scenario("R_SOLAR_1", "SOLAR", solar_target, 0, innocent=True, params={"peak_kw": float(rng.uniform(2.0, 4.0))}))
+    scenarios.append(Scenario("R_SOLAR_2", "SOLAR", customer_on_tx(), 0, innocent=True, params={"peak_kw": float(rng.uniform(2.0, 4.0))}))
+
+    missing_tx = tx_target()
+    missing_targets = [customer_on_tx(missing_tx) for _ in range(min(3, len(np.flatnonzero(tx_by_customer == missing_tx))))]
+    missing_start = start_day()
+    scenarios.append(Scenario("R_MISSING", "MISSING_BLOCK", missing_targets[0], missing_start,
+                              end_day=min(n_days, missing_start + 3), innocent=True,
+                              params={"targets": missing_targets}))
+
+    ci = customer_on_tx()
+    scenarios.append(Scenario("R_TARIFF", "TARIFF_MISUSE", ci, 0, innocent=True))
     return scenarios
 
 
