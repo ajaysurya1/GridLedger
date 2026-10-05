@@ -38,7 +38,7 @@ def render() -> None:
         {"Research": "Saleem & Weng (2022)", "What we took / what we changed": "Treat meter-to-transformer records as evidence; added a mapping what-if check before recommending field action."},
         {"Research": "Bludszuweit et al. (2022), INTERPRETER", "What we took / what we changed": "Use voltage deviation as a cross-check; model it as an optional corroborating signal, not standalone proof."},
         {"Research": "Orvati Nia et al. (2026)", "What we took / what we changed": "Use temporal baselines; kept interpretable rules in the core and leave GAN-LSTM as an optional future upgrade."},
-    ], use_container_width=True, hide_index=True)
+    ], width="stretch", hide_index=True)
 
     st.subheader("Assumptions and limits")
     st.warning("""

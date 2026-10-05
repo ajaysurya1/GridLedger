@@ -362,18 +362,18 @@ def render(world, results) -> None:
 
     with col_fused:
         if fused:
-            st.plotly_chart(_fusion_gauge(fused.get("fused_score", 0.1)), use_container_width=True, key=f"gauge_{selected}")
+            st.plotly_chart(_fusion_gauge(fused.get("fused_score", 0.1)), width="stretch", key=f"gauge_{selected}")
 
     today_day = results.today_day
 
     # ── Charts ────────────────────────────────────────────────────────────
     st.markdown('<div class="section-header">Energy gap over time</div>', unsafe_allow_html=True)
     st.caption("Bars show daily differences; the line shows whether a gap persists across days.")
-    st.plotly_chart(_cusum_chart(finding, today_day), use_container_width=True, key=f"cusum_{selected}")
+    st.plotly_chart(_cusum_chart(finding, today_day), width="stretch", key=f"cusum_{selected}")
 
     st.markdown('<div class="section-header">Where the energy went</div>', unsafe_allow_html=True)
     st.caption("Where did the energy go over the last 7 days?")
-    st.plotly_chart(_waterfall_chart(finding, today_day), use_container_width=True, key=f"waterfall_{selected}")
+    st.plotly_chart(_waterfall_chart(finding, today_day), width="stretch", key=f"waterfall_{selected}")
 
     # ── Voltage physics (transformer-only) ────────────────────────────────
     if volt:
@@ -400,7 +400,7 @@ def render(world, results) -> None:
             """, unsafe_allow_html=True)
 
         st.caption("Blue dashed = what the utility's digital twin predicts · Green = actual smart meter readings · Red bars = alarm days")
-        st.plotly_chart(_voltage_chart(volt, today_day), use_container_width=True, key=f"volt_{selected}")
+        st.plotly_chart(_voltage_chart(volt, today_day), width="stretch", key=f"volt_{selected}")
 
         # Voltage detail metrics
         v_col1, v_col2, v_col3, v_col4 = st.columns(4)
@@ -534,4 +534,4 @@ def render(world, results) -> None:
             "CUSUM S": np.round(finding.S, 3),
             "Imputed (kWh)": np.round(finding.n_imputed, 2),
         })
-        st.dataframe(df, use_container_width=True, hide_index=True, height=300)
+        st.dataframe(df, width="stretch", hide_index=True, height=300)

@@ -128,7 +128,7 @@ def render() -> None:
     fig.update_layout(height=390, yaxis=dict(range=[0, 1], tickformat=".0%", title="Mean rate"),
                       legend_title_text="System", margin=dict(l=10, r=10, t=20, b=30),
                       paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig, width="stretch", config={"displayModeBar": False})
 
     operational_keys = ["false_inspections_per_100_transformer_days", "median_detection_delay_days", "recovered_simulated_kwh_top5"]
     operational = _comparison_frame(summary, operational_keys)
@@ -136,7 +136,7 @@ def render() -> None:
                      error_y="Std", color_discrete_map={"Customer-only": "#38BDF8", "Fixed 8% rule": "#F59E0B", "GridLedger": "#2563EB"})
     fig_ops.update_layout(height=350, legend_title_text="System", margin=dict(l=10, r=10, t=20, b=30),
                           paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-    st.plotly_chart(fig_ops, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(fig_ops, width="stretch", config={"displayModeBar": False})
 
     display_rows = []
     for key, (label, description) in METRICS.items():
@@ -148,7 +148,7 @@ def render() -> None:
         row["Meaning"] = description
         display_rows.append(row)
     st.subheader("Results at a glance")
-    st.dataframe(pd.DataFrame(display_rows), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(display_rows), width="stretch", hide_index=True)
 
     kinds = list(summary["C"]["per_kind_recall"])
     heat = pd.DataFrame({name: [summary[sys]["per_kind_recall"][kind]["mean"] for kind in kinds]
@@ -159,7 +159,7 @@ def render() -> None:
                                    texttemplate="%{text}", hovertemplate="%{y}<br>%{x}: %{z:.0%}<extra></extra>"))
     heatmap.update_layout(title="Which event types were found?", height=350, margin=dict(l=10, r=10, t=50, b=20),
                           paper_bgcolor="rgba(0,0,0,0)")
-    st.plotly_chart(heatmap, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(heatmap, width="stretch", config={"displayModeBar": False})
 
     with st.expander("Run three fresh simulated seeds"):
         st.caption("Fresh runs are separate from the held-out report and are not used for tuning.")
@@ -172,4 +172,4 @@ def render() -> None:
             fresh = st.session_state.fresh_benchmark
             st.caption(f"Fresh seeds: {', '.join(map(str, fresh['metadata']['seeds']))}")
             fresh_table = _comparison_frame(fresh["summary"], ["event_recall", "case_precision", "customer_top3_hit_rate"])
-            st.dataframe(fresh_table.pivot(index="Metric", columns="System", values="Mean").style.format("{:.0%}"), use_container_width=True)
+            st.dataframe(fresh_table.pivot(index="Metric", columns="System", values="Mean").style.format("{:.0%}"), width="stretch")

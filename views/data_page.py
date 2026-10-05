@@ -12,7 +12,7 @@ def _template_downloads() -> None:
     for col, (name, contents) in zip(cols, templates.items()):
         with col:
             st.download_button(f"Download {name}", contents, file_name=name, mime="text/csv",
-                               use_container_width=True, help=f"Download the {name} column template.")
+                               width="stretch", help=f"Download the {name} column template.")
 
 
 def render() -> None:
@@ -81,15 +81,15 @@ def render() -> None:
     d.metric("Reset registers", f"{report['register_resets']:,}", help="Cumulative registers that decreased; the affected interval was quarantined.")
     with st.expander("Coverage by transformer"):
         st.dataframe([{"Transformer": node, "Missing meter readings": f"{share:.1%}"}
-                      for node, share in report["missing_per_transformer"].items()], use_container_width=True, hide_index=True)
+                      for node, share in report["missing_per_transformer"].items()], width="stretch", hide_index=True)
     if not result.quarantine.empty:
         with st.expander("Quarantined rows"):
-            st.dataframe(result.quarantine, use_container_width=True, hide_index=True)
+            st.dataframe(result.quarantine, width="stretch", hide_index=True)
 
     if st.session_state.get("legacy_weekly") is not None:
         st.subheader("Weekly energy checks")
         st.caption("Audit mode for utilities without hourly data. No time-of-day patterns, voltage checks, or automated actions are included.")
-        st.dataframe(st.session_state.legacy_weekly, use_container_width=True, hide_index=True)
+        st.dataframe(st.session_state.legacy_weekly, width="stretch", hide_index=True)
         return
 
     results = st.session_state.get("imported_detection")
@@ -105,5 +105,5 @@ def render() -> None:
             "Unaccounted energy (kWh/day)": round(sum(abs(run.kwh_per_day) for run in finding.runs if run.active), 1),
             "Data warnings": len(finding.dq_warnings),
         })
-    st.dataframe(findings, use_container_width=True, hide_index=True)
+    st.dataframe(findings, width="stretch", hide_index=True)
     st.caption("These results support prioritisation only. They are not proof of theft or grounds for customer action.")

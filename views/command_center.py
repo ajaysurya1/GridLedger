@@ -253,7 +253,7 @@ def render(world, results) -> None:
         # Plotly click event
         event = st.plotly_chart(
             fig,
-            use_container_width=True,
+            width="stretch",
             on_select="rerun",
             selection_mode="points",
             key="grid_tree",
@@ -360,7 +360,7 @@ def render(world, results) -> None:
                     st.markdown(f'<div class="warn-box">⚠ {w}</div>', unsafe_allow_html=True)
 
             st.markdown("")
-            if st.button("📋 Open Case File", use_container_width=True, type="primary"):
+            if st.button("📋 Open Case File", width="stretch", type="primary"):
                 st.session_state.active_page = "Case File"
                 st.rerun()
 
@@ -405,7 +405,7 @@ def render(world, results) -> None:
 
     st.dataframe(
         df.style.map(_color_status, subset=["Status"]),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         height=400,
     )

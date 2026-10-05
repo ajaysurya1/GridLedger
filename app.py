@@ -358,15 +358,15 @@ def _render_sidebar():
 
             col1, col2, col3 = st.columns(3)
             with col1:
-                if st.button("+1", use_container_width=True):
+                if st.button("+1", width="stretch"):
                     st.session_state.today_day = min(st.session_state.today_day + 1, CFG.n_days)
                     st.rerun()
             with col2:
-                if st.button("+5", use_container_width=True):
+                if st.button("+5", width="stretch"):
                     st.session_state.today_day = min(st.session_state.today_day + 5, CFG.n_days)
                     st.rerun()
             with col3:
-                if st.button("↺", use_container_width=True):
+                if st.button("↺", width="stretch"):
                     st.session_state.today_day = CFG.default_today_day
                     st.rerun()
 
@@ -409,7 +409,7 @@ def _render_sidebar():
             internal_page = page_keys.get(page, page)
             is_active = st.session_state.active_page == internal_page
             btn_style = "primary" if is_active else "secondary"
-            if st.button(f"{icon} {page}", use_container_width=True, type=btn_style if is_active else "secondary"):
+            if st.button(f"{icon} {page}", width="stretch", type=btn_style if is_active else "secondary"):
                 st.session_state.active_page = internal_page
                 st.rerun()
 
