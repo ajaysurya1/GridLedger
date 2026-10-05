@@ -60,3 +60,17 @@ def test_app_clean_preset():
     at.session_state["selected_node"] = None
     at.run()
     assert not at.exception, f"Exception on Clean preset: {at.exception}"
+
+
+def test_scenario_lab_end_day_is_arrow_safe():
+    """Scenario table normalizes mixed int/placeholder values before Arrow conversion."""
+    import pandas as pd
+    import pyarrow as pa
+
+    from views.scenario_lab import _normalize_end_day
+
+    values = [_normalize_end_day(12), _normalize_end_day(None), _normalize_end_day(0)]
+    df = pd.DataFrame({"End Day": values})
+    table = pa.Table.from_pandas(df, preserve_index=False)
+
+    assert table["End Day"].to_pylist() == ["12", "—", "0"]

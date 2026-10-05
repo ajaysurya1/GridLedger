@@ -31,6 +31,13 @@ INNOCENT_LABEL = {True: "✓ Innocent", False: "✗ NTL / Loss"}
 INNOCENT_COLOR = {True: "#30A46C", False: "#E5484D"}
 
 
+def _normalize_end_day(value):
+    """Convert mixed integer/placeholder values into a consistent string column."""
+    if value is None or pd.isna(value):
+        return "—"
+    return str(value)
+
+
 def render(world, results) -> None:
     """Render the Scenario Lab page."""
     st.title("What can happen")
@@ -85,7 +92,7 @@ def render(world, results) -> None:
             "Kind": sc.kind,
             "Target": target_name,
             "Start Day": sc.start_day,
-            "End Day": sc.end_day if sc.end_day is not None else "—",
+            "End Day": _normalize_end_day(sc.end_day),
             "Active?": status_str,
             "Innocent?": INNOCENT_LABEL[sc.innocent],
             "Description": KIND_DESC.get(sc.kind, sc.kind),
@@ -104,7 +111,7 @@ def render(world, results) -> None:
         }.get(val, "")
 
     styled = df.style.map(_color_innocent, subset=["Innocent?"]).map(_color_active, subset=["Active?"])
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    st.dataframe(styled, width="stretch", hide_index=True)
 
     # Summary cards
     st.markdown("---")
